@@ -60,12 +60,12 @@ class LogImpl(graceRps: Int) extends Log {
       if (rps(sla) < timeBuffer.size)
         timeBuffer.remove(0)
   }
-  def isAllowed(sla: Option[Sla]) = {
+  def isAllowed(sla: Option[Sla]): Boolean = {
     if (!timeLog.isDefinedAt(sla))
-      true
+      return true
     val log: ListBuffer[Time] = timeLog(sla)
     if (log.size < rps(sla))
-      true
+      return true
     else
       (System.currentTimeMillis - log.head) > 1000
   }
