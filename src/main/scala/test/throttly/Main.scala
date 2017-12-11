@@ -43,7 +43,7 @@ object Main extends App {
         }
 
         val future = throttler ? IsRequestAllowed(token)
-        val result = Await.result(future, 1.second)
+        val result = Await.result(future, 5.seconds)
 
         complete(HttpResponse(entity=result.toString))
       }
