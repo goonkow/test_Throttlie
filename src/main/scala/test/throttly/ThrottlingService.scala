@@ -1,9 +1,45 @@
 package test.throttly
 
+import akka.actor.Actor
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContextExecutor
 
+
+case class IsRequestAllowed(token: Option[String])
+
+trait ThrottlingService extends Actor{
+  type Cache = Map[Option[String], Sla]
+  val graceRps:Int // configurable
+  val slaService: SlaService // use mocks/stubs for testing
+  // Should return true if the request is within allowed RPS.
+  def isRequestAllowed(token:Option[String]): Boolean
+
+}
+
+class ThrottlingServiceImpl(val graceRps: Int, val slaService: SlaService)(implicit ec: ExecutionContextExecutor) extends ThrottlingService {
+  val log = new LogImpl
+  var cache: Cache = Map()
+
+  def isRequestAllowed(token:Option[String]): Boolean = {
+    val cacheSla: Option[Sla] = cache get token
+    log.addEvent(cacheSla)
+
+    if (cacheSla.isEmpty) {
+      token.foreach{ t =>
+        slaService.getSlaByToken(t) onSuccess  {
+          case sla => {
+            // update cache & log
+          }
+        }
+      }
+    }
+    log.isExceed(cacheSla)
+  }
+  override def receive = {
+    case IsRequestAllowed(token) => sender ! isRequestAllowed(token)
+  }
+}
 trait Log {
   def addEvent(sla: Option[Sla]): Unit
   def isExceed(sla: Option[Sla]): Boolean
@@ -24,37 +60,5 @@ class LogImpl extends Log {
       true
     else
       (System.currentTimeMillis - log.head) < 1000
-  }
-}
-
-case class Sla(user:String, rps:Int)
-
-trait SlaService {
-  def getSlaByToken(token:String):Future[Sla]
-}
-
-trait ThrottlingService {
-  type Cache = Map[Option[String], Sla]
-  val graceRps:Int // configurable
-  val slaService: SlaService // use mocks/stubs for testing
-  // Should return true if the request is within allowed RPS.
-  def isRequestAllowed(token:Option[String])(log: Log)(implicit cache: Cache): Boolean
-}
-
-class ThrottlingServiceImpl(val graceRps: Int, val slaService: SlaService) extends ThrottlingService {
-  def isRequestAllowed(token:Option[String])(log: Log)(implicit cache: Cache): Boolean = {
-    val cacheSla: Option[Sla] = cache get token
-    log.addEvent(cacheSla)
-
-    if (cacheSla.isEmpty) {
-      token.foreach{ t =>
-        slaService.getSlaByToken(t) onSuccess  {
-          case sla => {
-            // update cache & log
-          }
-        }
-      }
-    }
-    log.isExceed(cacheSla)
   }
 }
