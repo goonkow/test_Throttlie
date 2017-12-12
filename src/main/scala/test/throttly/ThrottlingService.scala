@@ -34,11 +34,13 @@ class ThrottlingServiceImpl(val graceRps: Int, val slaService: SlaService)(impli
   }
   def requestSla(token: Option[String]) = {
     token.foreach{ t =>
-      activeRequests.add(t)
-      slaService.getSlaByToken(t) onSuccess  {
-        case sla: Sla =>
-          activeRequests.remove(t)
-          cache += (Some(t) -> sla)
+      if (!activeRequests.contains(t)) {
+        activeRequests.add(t)
+        slaService.getSlaByToken(t) onSuccess  {
+          case sla: Sla =>
+            activeRequests.remove(t)
+            cache += (Some(t) -> sla)
+        }
       }
     }
   }
