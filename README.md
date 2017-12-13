@@ -4,7 +4,7 @@ scala, SBT, akka-http(former spray), akka
 ## TO RUN:
 sbt compile run
 
-##Td test:
+## Td test:
 sbt gatling:test
 
 endpoints: "/" - with "Authorization" header value as token
