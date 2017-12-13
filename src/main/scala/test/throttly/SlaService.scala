@@ -11,10 +11,11 @@ trait SlaService {
   def getSlaByToken(token:String):Future[Sla]
 }
 
-class SlaServiceImpl(implicit val ec: ExecutionContext) extends SlaService {
+class SlaServiceImplTest(defaultRps: Int)(implicit val ec: ExecutionContext) extends SlaService {
   override def getSlaByToken(token: String): Future[Sla] = {
     Future{
-      Sla("pew", 1)
+      Thread.sleep(250)
+      Sla(token, defaultRps)
     }
   }
 }

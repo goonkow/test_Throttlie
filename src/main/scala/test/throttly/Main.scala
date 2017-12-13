@@ -19,11 +19,11 @@ object Main extends App {
 
   implicit val system = ActorSystem("http-system")
   implicit val materializer = ActorMaterializer()
-  implicit private val executionContext: ExecutionContextExecutor = system.dispatcher
+  implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
   implicit val timeout = Timeout(1 second)
 
-  val slaService = new SlaServiceImpl
+  val slaService = new SlaServiceImplTest(5)
   val throttler = system.actorOf(Props(new ThrottlingServiceImpl(1, slaService)))
   val inbox = Inbox.create(system)
 
@@ -48,7 +48,7 @@ object Main extends App {
         complete(HttpResponse(entity=result.toString))
       }
     } ~
-    path("test") {
+    path("without") {
       get {
         complete("It's ALIVE!")
       }
