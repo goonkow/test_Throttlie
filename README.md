@@ -1,4 +1,17 @@
 ### Throttlie
+scala, SBT, akka-http(former spray), akka 
+
+## TO RUN:
+sbt compile run
+
+##Td test:
+sbt gatling:test
+
+endpoints: "/" - with "Authorization" header value as token
+"/without" - without Throttling to test
+
+
+
 Rules for RPS counting
 1. If no token provided, assume the client as unauthorized.
 2. All unauthorized user's requests are limited by GraceRps
@@ -8,7 +21,7 @@ treat it as unauthorized user
 different tokens for authorization
 5. SLA should be counted by intervals of 1/10 second (i.e. if RPS
 limit is reached, after 1/10 second ThrottlingService should allow
-10% more requests)
+10% more requests) # bad idea
 6. SLA information is changed quite rarely and SlaService is quite
 costly to call (~250ms per request), so consider caching SLA
 requests. Also, you should not query the service, if the same token

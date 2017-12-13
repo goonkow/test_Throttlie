@@ -2,15 +2,16 @@ package test.throttly
 
 import akka.actor.Actor
 
+import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
-import scala.collection.mutable.{HashMap, ListBuffer}
+import scala.collection.mutable.{ListBuffer, SynchronizedSet}
 import scala.concurrent.ExecutionContextExecutor
 
 
 case class IsRequestAllowed(token: Option[String])
 
 trait ThrottlingService extends Actor{
-  type Cache = mutable.HashMap[Option[String], Sla]
+  type Cache = TrieMap[Option[String], Sla]
   val graceRps:Int // configurable
   val slaService: SlaService // use mocks/stubs for testing
   // Should return true if the request is within allowed RPS.
@@ -20,8 +21,9 @@ trait ThrottlingService extends Actor{
 
 class ThrottlingServiceImpl(val graceRps: Int, val slaService: SlaService)(implicit ec: ExecutionContextExecutor) extends ThrottlingService {
   val log = new LogImpl(graceRps)
-  val cache: Cache = mutable.HashMap.empty
-  val activeRequests = mutable.HashSet[String]()
+  val cache: Cache = TrieMap.empty
+  //you should not query the service, if the same token request is already in progress.
+  val activeRequests = new mutable.HashSet[String] with SynchronizedSet[String]
 
   def isRequestAllowed(token:Option[String]): Boolean = {
     val cacheSla: Option[Sla] = cache get token
@@ -55,7 +57,7 @@ trait Log {
 
 class LogImpl(graceRps: Int) extends Log {
   type Time = Long
-  var timeLog = scala.collection.mutable.Map[Option[Sla], ListBuffer[Time]](None -> ListBuffer())
+  var timeLog = TrieMap[Option[Sla], ListBuffer[Time]](None -> ListBuffer())
   def logEvent(sla: Option[Sla]): Unit = {
     val timeBuffer: ListBuffer[Time] = timeLog.getOrElseUpdate(sla, ListBuffer())
     timeBuffer.append(System.currentTimeMillis)
