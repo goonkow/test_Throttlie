@@ -6,6 +6,7 @@ sbt compile run
 
 ## To test:
 sbt test
+
 sbt gatling:test
 
 
