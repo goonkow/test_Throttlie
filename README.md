@@ -12,6 +12,15 @@ endpoints: "/" - with "Authorization" header value as token
 
 
 
+
+
+
+
+
+
+
+
+
 Rules for RPS counting
 1. If no token provided, assume the client as unauthorized.
 2. All unauthorized user's requests are limited by GraceRps
