@@ -20,6 +20,12 @@ endpoints: "/" - with "Authorization" header value as token
 
 
 
+### 
+
+____
+##
+#
+_
 
 Rules for RPS counting
 1. If no token provided, assume the client as unauthorized.
